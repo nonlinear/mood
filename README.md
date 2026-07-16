@@ -3,9 +3,9 @@
 Simple, minimal image gallery with infinite scroll.
 Zero dependencies (vanilla JS + PHP).
 
-## Personalize
+## 🎨 Primeiro, personalize
 
-Edit `config.json` before running:
+Edite `config.json` antes de rodar:
 
 ```json
 {
@@ -20,15 +20,15 @@ Edit `config.json` before running:
 }
 ```
 
-| Field | What it does |
+| Campo | O que faz |
 |---|---|
-| `imagesDir` | Path to your images (relative to project root, or absolute) |
-| `siteName` | Used in `<title>`, PWA name, and menu heading |
-| `siteUrl` | Base URL for PWA manifest |
-| `siteLink` | Link the globe icon in the menu opens |
-| `rateLimit` | Max requests per IP per time window (router.php) |
+| `imagesDir` | Caminho das suas imagens (relativo ao projeto ou absoluto) |
+| `siteName` | Nome que aparece no `<title>`, PWA e menu |
+| `siteUrl` | URL base pro manifesto PWA |
+| `siteLink` | Link que o ícone do globo abre |
+| `rateLimit` | Máx de requisições por IP por janela de tempo |
 
-## Run
+## ▶️ Rodar
 
 ```bash
 git clone https://github.com/nonlinear/mood
