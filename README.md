@@ -9,7 +9,7 @@ Zero dependencies (vanilla JS + PHP).
 git clone https://github.com/nonlinear/mood
 cd mood
 
-# Edit config.json — set your images directory
+# Edit config.json — set your images directory and site name
 #   "imagesDir": "images"   → relative path from project root
 ln -s /path/to/your/pictures images
 
@@ -28,6 +28,7 @@ Edit `config.json`:
   "imagesDir": "images",
   "siteName": "mood",
   "siteUrl": "http://localhost:3001",
+  "siteLink": "https://nonlinear.nyc",
   "rateLimit": {
     "maxRequests": 30,
     "windowSeconds": 10
@@ -38,9 +39,10 @@ Edit `config.json`:
 | Field | What it does |
 |---|---|
 | `imagesDir` | Directory (or symlink) with your images |
-| `siteName` | Used in `<title>` and PWA name |
+| `siteName` | Used in `<title>`, PWA name, and menu heading |
 | `siteUrl` | Base URL for PWA manifest |
-| `rateLimit` | Max requests per IP per time window |
+| `siteLink` | Link the globe icon in the menu opens |
+| `rateLimit` | Max requests per IP per time window (router.php) |
 
 ## Features
 - Latest or Random sort modes
@@ -51,16 +53,33 @@ Edit `config.json`:
 - Responsive (1–4 columns)
 - PWA (add to home screen)
 
+## Typefaces
+
+The gallery includes ten display typefaces (no Google Fonts, no external requests):
+
+| Font | Foundry |
+|---|---|
+| [Compagnon](https://uset.org) | Uset |
+| [Violet Sans](https://uset.org) | Uset |
+| [Miratrix](https://g-type.com) | G-Type |
+| [Messages](https://messages.supply) | Messages |
+| [Mareta](https://uset.org) | Uset |
+| [PP Right Didone](https://pangrampangram.com) | Pangram Pangram |
+| [PP Monument Extended](https://pangrampangram.com) | Pangram Pangram |
+| [PP Hatton](https://pangrampangram.com) | Pangram Pangram |
+| [Perfograma](https://perfograma.com) | Perfograma |
+| [Misto](https://uset.org) | Uset |
+
 ## File Structure
 ```
 mood/
-├── config.json        # Settings (images directory, site name, rate limit)
+├── config.json        # Settings (images directory, site name, rate limit, fonts)
 ├── index.php          # Gallery UI (vanilla JS)
 ├── api.php            # JSON endpoint (image list)
 ├── router.php         # PHP built-in server router + rate limit
 ├── run-mood.sh        # Launch script
-├── fonts/
-├── icons/
+├── fonts/             # Typefaces (bundled)
+├── icons/             # PWA icons
 ├── static/            # Error pages (too-busy.html)
 ├── images/ → ...      # Symlink to your pictures (not in repo)
 ├── manifest.json      # PWA manifest

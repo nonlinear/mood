@@ -3,6 +3,7 @@ $config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
 $siteName = $config['siteName'] ?? 'mood';
 $siteTitle = $siteName === 'mood' ? 'mood is joyscrolling' : "$siteName — inspiration gallery";
 $siteUrl = $config['siteUrl'] ?? 'http://localhost:3001';
+$siteLink = $config['siteLink'] ?? 'https://nonlinear.nyc';
 $pwaTitle = $config['pwaTitle'] ?? $siteName;
 ?>
 <!DOCTYPE html>
@@ -457,12 +458,12 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       </div>
       <div id="menu-spacer"></div>
       <div id="menu-bottom">
-        <a href="https://nonlinear.nyc" class="menu-icon" id="iconGlobe" data-tooltip="nonlinear.nyc" target="_blank" rel="noopener">
+        <a href="<?= htmlspecialchars($siteLink) ?>" class="menu-icon" id="iconGlobe" data-tooltip="<?= htmlspecialchars($siteLink) ?>" target="_blank" rel="noopener">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="transform:rotate(-90deg)">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
           </svg>
         </a>
-        <h1>mood.nonlinear.nyc</h1>
+        <h1><?= htmlspecialchars($siteName) ?>.nonlinear.nyc</h1>
       </div>
     </div>
     <div class="gallery-column" data-col="2"></div>
@@ -641,7 +642,7 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
                     
                     await navigator.share({
                       files: [file],
-                      title: 'mood.nonlinear'
+                      title: '<?= htmlspecialchars($siteName) ?>.nonlinear'
                     });
                   } catch (err) {
                     // Fallback to download if share fails
