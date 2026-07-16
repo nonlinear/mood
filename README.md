@@ -10,8 +10,7 @@ git clone https://github.com/nonlinear/mood
 cd mood
 
 # Edit config.json — set your images directory and site name
-#   "imagesDir": "images"   → relative path from project root
-ln -s /path/to/your/pictures images
+#   "imagesDir": "images"   → relative or absolute path to your pictures
 
 # Serve locally
 php -S localhost:3001 router.php
@@ -38,7 +37,7 @@ Edit `config.json`:
 
 | Field | What it does |
 |---|---|
-| `imagesDir` | Directory (or symlink) with your images |
+| `imagesDir` | Path to your images (relative to project root, or absolute) |
 | `siteName` | Used in `<title>`, PWA name, and menu heading |
 | `siteUrl` | Base URL for PWA manifest |
 | `siteLink` | Link the globe icon in the menu opens |
@@ -81,7 +80,7 @@ mood/
 ├── fonts/             # Typefaces (bundled)
 ├── icons/             # PWA icons
 ├── static/            # Error pages (too-busy.html)
-├── images/ → ...      # Symlink to your pictures (not in repo)
+├── images/            # Your pictures (defined in config.json, not in repo)
 ├── manifest.json      # PWA manifest
 ```
 
