@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>mood</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>exec /opt/homebrew/bin/php -S 127.0.0.1:3001 -t /Users/nonlinear/Documents/mood /Users/nonlinear/Documents/mood/router.php &gt;&gt; /Users/nonlinear/Documents/mood/php-server.log 2&gt;&amp;1</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/nonlinear/Documents/mood</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+</dict>
+</plist>

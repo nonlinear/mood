@@ -1,0 +1,13 @@
+# Images — symlink, não incluir no repo
+images/
+
+# PHP server log
+php-server.log
+php-server-error.log
+
+# Rate limit cache
+.ratelimit.cache
+
+# OS files
+.DS_Store
+*.bak
