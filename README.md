@@ -3,9 +3,16 @@
 Simple, minimal image gallery with infinite scroll.
 Zero dependencies (vanilla JS + PHP).
 
-## 🎨 Primeiro, personalize
+## Download
 
-Edite `config.json` antes de rodar:
+```bash
+git clone https://github.com/nonlinear/mood
+cd mood
+```
+
+## 🎨 Personalize
+
+Edite `config.json`:
 
 ```json
 {
@@ -31,9 +38,6 @@ Edite `config.json` antes de rodar:
 ## ▶️ Rodar
 
 ```bash
-git clone https://github.com/nonlinear/mood
-cd mood
-# Edit config.json first ↑
 php -S localhost:3001 router.php
 ```
 
