@@ -43,7 +43,7 @@ php -S localhost:3001 router.php
 
 Open **http://localhost:3001**
 
-## Making it Public — Cloudflare Tunnel
+## 🌐 Tornar público — Cloudflare Tunnel
 
 This gallery runs on a private machine. To expose it safely to the internet
 without opening any ports or revealing the origin IP, it uses a **Cloudflare
