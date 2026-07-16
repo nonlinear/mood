@@ -12,7 +12,7 @@ cd mood
 
 ## 🎨 Personalize
 
-Edite `config.json`:
+Edit `config.json`:
 
 ```json
 {
@@ -27,15 +27,15 @@ Edite `config.json`:
 }
 ```
 
-| Campo | O que faz |
+| Field | What it does |
 |---|---|
-| `imagesDir` | Caminho das suas imagens (relativo ao projeto ou absoluto) |
-| `siteName` | Nome que aparece no `<title>`, PWA e menu |
-| `siteUrl` | URL base pro manifesto PWA |
-| `siteLink` | Link que o ícone do globo abre |
-| `rateLimit` | Máx de requisições por IP por janela de tempo |
+| `imagesDir` | Path to your images (relative to project root, or absolute) |
+| `siteName` | Name shown in `<title>`, PWA, and menu |
+| `siteUrl` | Base URL for PWA manifest |
+| `siteLink` | Link the globe icon in the menu opens |
+| `rateLimit` | Max requests per IP per time window |
 
-## ▶️ Rodar
+## ▶️ Run
 
 ```bash
 php -S localhost:3001 router.php
@@ -43,7 +43,7 @@ php -S localhost:3001 router.php
 
 Open **http://localhost:3001**
 
-## 🌐 Tornar público — Cloudflare Tunnel
+## 🌐 Making it public — Cloudflare Tunnel
 
 This gallery runs on a private machine. To expose it safely to the internet
 without opening any ports or revealing the origin IP, it uses a **Cloudflare
