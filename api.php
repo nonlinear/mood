@@ -1,7 +1,8 @@
 <?php
 header('Content-Type: application/json');
 
-$imagesDir = __DIR__ . '/images';
+$config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
+$imagesDir = __DIR__ . '/' . ($config['imagesDir'] ?? 'images');
 $mode = $_GET['mode'] ?? 'latest';
 $offset = (int)($_GET['offset'] ?? 0);
 $limit = min((int)($_GET['limit'] ?? 50), 100);

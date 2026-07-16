@@ -1,14 +1,14 @@
 <?php
 // Router for PHP built-in server.
-// Only serves: /, /api.php (executed), /index.php (executed),
-// /manifest.json, /icons/*, /fonts/*
-// Everything else -> index.php (SPA fallback)
+
+// --- Config ---
+$config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
+$imagesDir = $config['imagesDir'] ?? 'images';
 
 // --- Rate limit ---
-// Max 5 requests per 10 seconds per IP. Returns 429 + static/too-busy.html when exceeded.
 $rateLimitFile = __DIR__ . '/.ratelimit.cache';
-$rateLimitWindow = 10; // seconds
-$rateLimitMax = 30;     // max requests per window
+$rateLimitWindow = $config['rateLimit']['windowSeconds'] ?? 10;
+$rateLimitMax = $config['rateLimit']['maxRequests'] ?? 30;
 
 $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 // Trust X-Forwarded-For from Caddy/Cloudflare
@@ -99,24 +99,15 @@ if (preg_match('#^/static/[a-zA-Z0-9_\-\.]+\.(html|css|js)$#', $path)) {
     return false;
 }
 
-// Serve /images/* from the symlinked mood pictures directory
+// Serve /images/* from the configured images directory
 if (preg_match('#^/images/.+$#', $path)) {
-    $file = __DIR__ . $path;
+    $file = __DIR__ . '/' . $imagesDir . '/' . basename($path);
     if (file_exists($file)) {
-        return false;
-    }
-    // Try the actual Pictures/mood directory
-    $altFile = '/Users/nonlinear/Pictures/mood/' . basename($path);
-    if (file_exists($altFile)) {
-        // Rewrite to serve via readfile — try symlinked images/ first
-        $altFile = __DIR__ . '/images/' . basename($path);
-        if (file_exists($altFile)) {
-            $ext = strtolower(pathinfo($altFile, PATHINFO_EXTENSION));
-            $mimes = ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp','svg'=>'image/svg+xml'];
-            if (isset($mimes[$ext])) header('Content-Type: ' . $mimes[$ext]);
-            readfile($altFile);
-            return true;
-        }
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        $mimes = ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp','svg'=>'image/svg+xml'];
+        if (isset($mimes[$ext])) header('Content-Type: ' . $mimes[$ext]);
+        readfile($file);
+        return true;
     }
     // 404
     http_response_code(404);

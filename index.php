@@ -1,9 +1,16 @@
+<?php
+$config = json_decode(file_get_contents(__DIR__ . '/config.json'), true);
+$siteName = $config['siteName'] ?? 'mood';
+$siteTitle = $siteName === 'mood' ? 'mood is joyscrolling' : "$siteName — inspiration gallery";
+$siteUrl = $config['siteUrl'] ?? 'http://localhost:3001';
+$pwaTitle = $config['pwaTitle'] ?? $siteName;
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>mood.nonlinear.nyc is joyscrolling</title>
+  <title><?= htmlspecialchars($siteTitle) ?></title>
   
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
@@ -11,7 +18,7 @@
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="mood.nonlinear">
+  <meta name="apple-mobile-web-app-title" content="<?= htmlspecialchars($pwaTitle) ?>">
   <style>
     @font-face {
       font-family: 'Compagnon';

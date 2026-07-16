@@ -1,0 +1,9 @@
+{
+  "imagesDir": "images",
+  "siteName": "mood",
+  "siteUrl": "http://localhost:3001",
+  "rateLimit": {
+    "maxRequests": 30,
+    "windowSeconds": 10
+  }
+}
