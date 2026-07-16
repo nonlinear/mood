@@ -3,22 +3,17 @@
 Simple, minimal image gallery with infinite scroll.
 Zero dependencies (vanilla JS + PHP).
 
-## Quick Start
+## Run
 
 ```bash
 git clone https://github.com/nonlinear/mood
 cd mood
-
-# Edit config.json — set your images directory and site name
-#   "imagesDir": "images"   → relative or absolute path to your pictures
-
-# Serve locally
 php -S localhost:3001 router.php
 ```
 
-Open **http://localhost:3001**
+Open **http://localhost:3001**. Images won't load until you point to your pictures.
 
-## Customize
+## Personalize
 
 Edit `config.json`:
 
