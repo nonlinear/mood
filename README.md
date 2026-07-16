@@ -54,20 +54,9 @@ Edit `config.json`:
 
 ## Typefaces
 
-The gallery includes ten display typefaces (no Google Fonts, no external requests):
-
 | Font | Foundry |
 |---|---|
-| [Compagnon](https://uset.org) | Uset |
-| [Violet Sans](https://uset.org) | Uset |
-| [Miratrix](https://g-type.com) | G-Type |
-| [Messages](https://messages.supply) | Messages |
-| [Mareta](https://uset.org) | Uset |
-| [PP Right Didone](https://pangrampangram.com) | Pangram Pangram |
-| [PP Monument Extended](https://pangrampangram.com) | Pangram Pangram |
-| [PP Hatton](https://pangrampangram.com) | Pangram Pangram |
-| [Perfograma](https://perfograma.com) | Perfograma |
-| [Misto](https://uset.org) | Uset |
+| [Compagnon](https://uset.org) | Uset (Bold) — used in menu title |
 
 ## File Structure
 ```
