@@ -3,19 +3,9 @@
 Simple, minimal image gallery with infinite scroll.
 Zero dependencies (vanilla JS + PHP).
 
-## Run
-
-```bash
-git clone https://github.com/nonlinear/mood
-cd mood
-php -S localhost:3001 router.php
-```
-
-Open **http://localhost:3001**. Images won't load until you point to your pictures.
-
 ## Personalize
 
-Edit `config.json`:
+Edit `config.json` before running:
 
 ```json
 {
@@ -38,6 +28,17 @@ Edit `config.json`:
 | `siteLink` | Link the globe icon in the menu opens |
 | `rateLimit` | Max requests per IP per time window (router.php) |
 
+## Run
+
+```bash
+git clone https://github.com/nonlinear/mood
+cd mood
+# Edit config.json first ↑
+php -S localhost:3001 router.php
+```
+
+Open **http://localhost:3001**
+
 ## Features
 - Latest or Random sort modes
 - Infinite scroll (50 images per batch)
@@ -46,12 +47,6 @@ Edit `config.json`:
 - Double-tap to download / share
 - Responsive (1–4 columns)
 - PWA (add to home screen)
-
-## Typefaces
-
-| Font | Foundry |
-|---|---|
-| [Compagnon](https://uset.org) | Uset (Bold) — used in menu title |
 
 ## File Structure
 ```
