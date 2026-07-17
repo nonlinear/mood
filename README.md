@@ -2,6 +2,7 @@
 
 Simple, minimal image gallery with infinite scroll.
 Zero dependencies (vanilla JS + PHP).
+Like [mood.nonlinear.nyc](https://mood.nonlinear.nyc) but you bring your own image folder.
 
 ## Download
 
