@@ -77,11 +77,8 @@ flowchart TD
   vulnerabilities, macOS compromise, physical theft, or compromised Cloudflare
   credentials.
 
-This is the architecture of the [nonlinear.nyc](https://nonlinear.nyc)
-ecosystem — a Mac Studio behind a residential ISP, exposed through Cloudflare
-without a VPS or static IP.
 
 ## Notes
 
 - Supports: JPG, PNG, GIF, WebP
-- No database needed (filesystem-based)
+- Folder-friendly: no database needed — the filesystem is the index
