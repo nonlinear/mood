@@ -46,19 +46,40 @@ Open **http://localhost:3001**
 
 ## 🌐 Making it public — Cloudflare Tunnel
 
-This gallery runs on a private machine. To expose it safely to the internet
-without opening any ports or revealing the origin IP, it uses a **Cloudflare
-Tunnel** (formerly Argo Tunnel).
+This is how [mood.nonlinear.nyc](https://mood.nonlinear.nyc) is served.
 
-```
-Visitor → Cloudflare (CDN + WAF) → cloudflared tunnel (outbound) → local PHP server
+```mermaid
+flowchart TD
+    V[Visitor]
+    CF[Cloudflare]
+    T[cloudflared tunnel]
+    N[nginx :8090\nrate limit: 2r/s]
+    P[PHP :3001]
+    W[mood-watchdog.sh]
+
+    V -->|DNS| CF
+    CF -->|tunnel outbound| T
+    T -->|localhost:3001| P
+    N -.->|optional| P
+    W -.->|restart if dead| P
 ```
 
-- The tunnel is a **reverse connection**: the machine connects out to Cloudflare.
-  No port is opened in the firewall, no inbound connection ever reaches the machine.
-- Cloudflare proxies all traffic, so the origin IP stays hidden.
-- Rate limiting at Cloudflare keeps abuse away from your machine.
-- If the tunnel drops, the machine is unreachable — no open port to scan.
+### How it works
+
+- **Cloudflare Tunnel** instead of port forwarding. The Mac Studio initiates an
+  outbound connection to Cloudflare. No inbound port is ever opened.
+- **Rate limit** (nginx: 2 req/s, burst 5) applies to navigation and API only.
+  Images load freely — no throttling on scroll.
+- **Watchdog** (`mood-watchdog.sh`) checks PHP every 10s with `kill -0` and
+  restarts it if dead. Launched via `crontab @reboot`.
+- **Threat model:** protects against IP discovery, port scanning, directory
+  traversal, scrape abuse, and crash downtime. Does not protect against PHP
+  vulnerabilities, macOS compromise, physical theft, or compromised Cloudflare
+  credentials.
+
+This is the architecture of the [nonlinear.nyc](https://nonlinear.nyc)
+ecosystem — a Mac Studio behind a residential ISP, exposed through Cloudflare
+without a VPS or static IP.
 
 ## Notes
 
