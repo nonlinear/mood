@@ -11,3 +11,4 @@ php-server-error.log
 # OS files
 .DS_Store
 *.bak
+images
