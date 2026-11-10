@@ -10,7 +10,7 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title><?= htmlspecialchars($siteTitle) ?></title>
   
   <!-- PWA -->
@@ -65,6 +65,16 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
       line-height: 1.5;
       overflow-x: hidden;
+      /* viewport-fit=cover + this = the gallery paints under the status-bar/notch
+         area instead of leaving a black band where it used to be. */
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
+      box-sizing: border-box;
+    }
+
+    /* In fullscreen the insets collapse to 0, so the menu can reclaim the top. */
+    html[style*="--fs"] body {
+      padding-top: 0;
     }
 
     /* Gallery Grid */
@@ -872,12 +882,19 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       if (btn) btn.hidden = true;
     });
 
-    // ---- True fullscreen inside an installed window ----
+    // ---- True fullscreen ----
     // Chromium does not grant display-mode:fullscreen to a normal app window; it
-    // resolves to standalone, which is a windowed app (browser chrome still there on
-    // desktop). The Fullscreen API IS granted, so use it — but only inside an
-    // installed app, and only after a user gesture (browsers reject it otherwise).
-    if (standalone) {
+    // resolves to standalone, which on desktop still keeps window chrome. The
+    // Fullscreen API IS granted, so use it.
+    //
+    // Gate deliberately loose: an installed PWA reports standalone, but the same
+    // manifest opened as a plain tab reports "browser" and the user still wants the
+    // status bar gone. We only skip when we are ALREADY in standalone fullscreen
+    // (nothing left to hide). requestFullscreen is harmless outside an app.
+    var alreadyFull = document.fullscreenElement
+      || window.matchMedia('(display-mode: fullscreen)').matches;
+
+    if (!alreadyFull) {
       document.documentElement.style.background = '#000';
 
       // Hide the OS cursor while scrolling the gallery, but bring it back on any
@@ -895,21 +912,49 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       }, { passive: true });
 
       var went = false;
+
+      // Hide the OS status bar. On Android Chrome, requestFullscreen() with no options
+      // keeps the status bar and (on some builds) the address bar. navigationUI:'hide'
+      // is what removes them. It is the only supported value — 'show' restores them.
+      var FS_OPTS = { navigationUI: 'hide' };
+
       function goFullscreen() {
         if (went || document.fullscreenElement) return;
         var el = document.documentElement;
         var req = el.requestFullscreen || el.webkitRequestFullscreen;
         if (!req) return;
+
+        function mark() {
+          went = true;
+          // Belt and braces: browsers may render the app under the notch/status bar
+          // area once it is hidden. env(safe-area-inset-*) stays 0 without this.
+          document.documentElement.style.setProperty('--fs', '1');
+        }
+
         try {
-          var r = req.call(el);
-          if (r && r.then) r.then(function () { went = true; }, function () {});
-          else went = true;
+          var r = req.call(el, FS_OPTS);
+          if (r && r.then) {
+            // If navigationUI:'hide' is rejected, retry bare — a fullscreen with the
+            // status bar beats no fullscreen at all.
+            r.then(mark, function () {
+              try { var r2 = req.call(el); if (r2 && r2.then) r2.then(mark, function(){}); else mark(); }
+              catch (e2) {}
+            });
+          } else {
+            mark();
+          }
         } catch (e) { /* gesture required; retried on next touch */ }
       }
 
       // First interaction is a valid gesture. Listen once for each kind.
       ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
         window.addEventListener(ev, goFullscreen, { once: true, passive: true });
+      });
+
+      // Leaving fullscreen (swipe, system back) would otherwise leave the app
+      // permanently windowed for the rest of the session.
+      document.addEventListener('fullscreenchange', function () {
+        if (!document.fullscreenElement) went = false;
       });
     }
   })();
