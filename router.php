@@ -73,6 +73,7 @@ $allowedPhp = [
 // Static assets allowed
 $allowedStatic = [
     '/manifest.json',
+    '/sw-v1.js',
 ];
 
 if (in_array($path, $allowedPhp)) {

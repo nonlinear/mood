@@ -18,7 +18,7 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
   <meta name="theme-color" content="#000000">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="<?= htmlspecialchars($pwaTitle) ?>">
   <style>
     @font-face {
@@ -339,6 +339,31 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       }
     }
 
+    /* Install affordance — bottom-right, quiet, disappears once installed */
+    #install-btn {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 2000;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #666666;
+      background: #000000;
+      border: 1px solid #222222;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    #install-btn:hover {
+      color: #ffffff;
+      border-color: #ffffff;
+    }
+    #install-btn[hidden] {
+      display: none;
+    }
+
     /* Presentation: grid mode (no rotation, full width) */
     body.presentation-grid .gallery-item img {
       width: 100%;
@@ -400,13 +425,16 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
           </svg>
         </a>
-        <h1><?= htmlspecialchars($siteName) ?>.nonlinear.nyc</h1>
+        <h1><?= htmlspecialchars($siteTitle) ?></h1>
       </div>
     </div>
     <div class="gallery-column" data-col="2"></div>
     <div class="gallery-column" data-col="3"></div>
     <div class="gallery-column" data-col="4"></div>
   </div>
+
+  <!-- Install affordance. Hidden by default; shown only while installable. -->
+  <button id="install-btn" type="button" hidden>install</button>
 
   <script>
     let mode = 'random';
@@ -771,6 +799,120 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
 
     // Initial load
     loadImages();
+  </script>
+
+  <script>
+  // ---- PWA: service worker + install affordance ----
+  (function () {
+    var btn = document.getElementById('install-btn');
+    var deferredPrompt = null;
+
+    // Already installed? A window opened in --app / standalone is an installed app,
+    // NOT the browser. Never offer to install from inside the installed app.
+    var standalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.matchMedia('(display-mode: fullscreen)').matches
+      || window.matchMedia('(display-mode: minimal-ui)').matches
+      || window.navigator.standalone === true;
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw-v1.js', { scope: '/' })
+        .catch(function (e) { console.warn('sw register failed', e); });
+    }
+
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
+    function show(text) {
+      if (!btn || standalone) return;
+      if (text) btn.textContent = text;
+      btn.hidden = false;
+    }
+
+    // Chromium: fires when the app is genuinely installable.
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      show('install');
+    });
+
+    // Show it immediately instead of waiting for the event. On desktop Chromium the
+    // event can arrive late (or not at all if already dismissed once); the button
+    // then has no prompt to call, so clicking falls back to instructions.
+    if (!standalone) {
+      if (isIOS && isSafari) {
+        show('add to home screen');
+      } else {
+        show('install');
+      }
+    }
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () {
+            deferredPrompt = null;
+            btn.hidden = true;
+          });
+          return;
+        }
+        // No prompt available (iOS, Firefox, or already-dismissed).
+        if (isIOS) {
+          btn.textContent = 'share \u2192 add to home screen';
+        } else {
+          btn.textContent = 'menu \u2192 install mood';
+        }
+        setTimeout(function () { btn.textContent = 'install'; }, 4000);
+      });
+    }
+
+    window.addEventListener('appinstalled', function () {
+      deferredPrompt = null;
+      if (btn) btn.hidden = true;
+    });
+
+    // ---- True fullscreen inside an installed window ----
+    // Chromium does not grant display-mode:fullscreen to a normal app window; it
+    // resolves to standalone, which is a windowed app (browser chrome still there on
+    // desktop). The Fullscreen API IS granted, so use it — but only inside an
+    // installed app, and only after a user gesture (browsers reject it otherwise).
+    if (standalone) {
+      document.documentElement.style.background = '#000';
+
+      // Hide the OS cursor while scrolling the gallery, but bring it back on any
+      // pointer movement so the menu stays reachable.
+      var cursorTimer = null;
+      function hideCursor() {
+        if (cursorTimer) clearTimeout(cursorTimer);
+        cursorTimer = setTimeout(function () {
+          if (document.fullscreenElement) document.body.style.cursor = 'none';
+        }, 2200);
+      }
+      window.addEventListener('mousemove', function () {
+        document.body.style.cursor = '';
+        hideCursor();
+      }, { passive: true });
+
+      var went = false;
+      function goFullscreen() {
+        if (went || document.fullscreenElement) return;
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (!req) return;
+        try {
+          var r = req.call(el);
+          if (r && r.then) r.then(function () { went = true; }, function () {});
+          else went = true;
+        } catch (e) { /* gesture required; retried on next touch */ }
+      }
+
+      // First interaction is a valid gesture. Listen once for each kind.
+      ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+        window.addEventListener(ev, goFullscreen, { once: true, passive: true });
+      });
+    }
+  })();
   </script>
 </body>
 </html>
