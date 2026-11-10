@@ -349,67 +349,6 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       }
     }
 
-    /* Install toast — transient, bottom-left, never part of the gallery layout.
-       Injected by JS only when it has something to say. */
-    #install-toast {
-      position: fixed;
-      left: 16px;
-      bottom: calc(16px + env(safe-area-inset-bottom));
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      max-width: calc(100vw - 32px);
-      padding: 10px 12px;
-      background: #111111;
-      border: 1px solid #222222;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #999999;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
-    }
-    #install-toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    #install-toast .t-msg {
-      color: #cccccc;
-    }
-    #install-toast .t-act,
-    #install-toast .t-x {
-      background: none;
-      border: 0;
-      padding: 0;
-      font: inherit;
-      letter-spacing: inherit;
-      text-transform: inherit;
-      cursor: pointer;
-      color: #666666;
-      transition: color 0.2s;
-    }
-    #install-toast .t-act {
-      color: #ffffff;
-      border-bottom: 1px solid #333333;
-      padding-bottom: 1px;
-    }
-    #install-toast .t-act:hover {
-      border-bottom-color: #ffffff;
-    }
-    #install-toast .t-x {
-      font-size: 14px;
-      line-height: 1;
-    }
-    #install-toast .t-x:hover {
-      color: #ffffff;
-    }
-    #install-toast .t-act[hidden] {
-      display: none;
-    }
-
     /* Presentation: grid mode (no rotation, full width) */
     body.presentation-grid .gallery-item img {
       width: 100%;
@@ -845,13 +784,10 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
   </script>
 
   <script>
-  // ---- PWA: service worker + install toast ----
+  // ---- PWA: service worker ----
   (function () {
-    var deferredPrompt = null;
-    var toast = null;
-
     // Already installed? A window opened in --app / standalone is the installed app,
-    // not the browser. Never ask to install from inside the installed app.
+    // not the browser.
     var standalone = window.matchMedia('(display-mode: standalone)').matches
       || window.matchMedia('(display-mode: fullscreen)').matches
       || window.matchMedia('(display-mode: minimal-ui)').matches
@@ -860,104 +796,6 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw-v1.js', { scope: '/' })
         .catch(function (e) { console.warn('sw register failed', e); });
-    }
-
-    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
-
-    var SEEN_KEY = 'mood.installToast';
-
-    // A toast is transient by design: it appears, it can be dismissed, and it never
-    // occupies the gallery. Created in JS so it adds nothing to the page until it
-    // has something to say. Dismissed state is remembered so it does not nag.
-    function buildToast(text, actionLabel) {
-      if (toast) return toast;
-
-      toast = document.createElement('div');
-      toast.id = 'install-toast';
-      toast.setAttribute('role', 'status');
-      toast.innerHTML =
-        '<span class="t-msg"></span>' +
-        '<button class="t-act" type="button"></button>' +
-        '<button class="t-x" type="button" aria-label="dismiss">\u00d7</button>';
-
-      toast.querySelector('.t-msg').textContent = text;
-      var act = toast.querySelector('.t-act');
-      act.textContent = actionLabel;
-      toast.querySelector('.t-x').addEventListener('click', function (e) {
-        e.stopPropagation();
-        dismiss(true);
-      });
-
-      document.body.appendChild(toast);
-      // next frame so the transition runs
-      requestAnimationFrame(function () { toast.classList.add('show'); });
-      return toast;
-    }
-
-    function dismiss(remember) {
-      if (!toast) return;
-      toast.classList.remove('show');
-      if (remember) {
-        try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
-      }
-      var t = toast;
-      toast = null;
-      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
-    }
-
-    function alreadyDismissed() {
-      try { return localStorage.getItem(SEEN_KEY) === '1'; } catch (e) { return false; }
-    }
-
-    function offerInstall() {
-      if (standalone || alreadyDismissed()) return;
-
-      var iosHint = isIOS && isSafari;
-      var t = buildToast(
-        iosHint ? 'add mood to your home screen' : 'install mood',
-        iosHint ? 'how' : 'install'
-      );
-
-      t.querySelector('.t-act').addEventListener('click', function () {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then(function () {
-            deferredPrompt = null;
-            dismiss(true);
-          });
-          return;
-        }
-        // No native prompt available (iOS, Firefox, or already dismissed once).
-        // The toast turns into the instruction instead of doing nothing.
-        t.querySelector('.t-msg').textContent = iosHint
-          ? 'share \u2192 add to home screen'
-          : 'browser menu \u2192 install app';
-        t.querySelector('.t-act').hidden = true;
-        setTimeout(function () { dismiss(false); }, 6000);
-      });
-    }
-
-    // Chromium fires this when the app is genuinely installable. It may arrive late,
-    // or never (if dismissed once) — the toast does not wait for it, but it does not
-    // interrupt the first impression either: the prompt is stored and the offer still
-    // waits for the delay below.
-    window.addEventListener('beforeinstallprompt', function (e) {
-      e.preventDefault();
-      deferredPrompt = e;
-    });
-
-    window.addEventListener('appinstalled', function () {
-      deferredPrompt = null;
-      dismiss(true);
-    });
-
-    // Do not interrupt the first impression: the gallery gets a moment to load and
-    // the visitor gets a moment to scroll before anything is asked of them.
-    var DELAY = 9000;
-    if (!standalone && !alreadyDismissed()) {
-      setTimeout(offerInstall, DELAY);
     }
 
     // ---- True fullscreen ----
