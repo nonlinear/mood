@@ -349,28 +349,64 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       }
     }
 
-    /* Install affordance — bottom-right, quiet, disappears once installed */
-    #install-btn {
+    /* Install toast — transient, bottom-left, never part of the gallery layout.
+       Injected by JS only when it has something to say. */
+    #install-toast {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
+      left: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
       z-index: 2000;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #666666;
-      background: #000000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: calc(100vw - 32px);
+      padding: 10px 12px;
+      background: #111111;
       border: 1px solid #222222;
-      padding: 8px 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #999999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    #install-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #install-toast .t-msg {
+      color: #cccccc;
+    }
+    #install-toast .t-act,
+    #install-toast .t-x {
+      background: none;
+      border: 0;
+      padding: 0;
+      font: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
       cursor: pointer;
-      transition: color 0.2s, border-color 0.2s;
+      color: #666666;
+      transition: color 0.2s;
     }
-    #install-btn:hover {
+    #install-toast .t-act {
       color: #ffffff;
-      border-color: #ffffff;
+      border-bottom: 1px solid #333333;
+      padding-bottom: 1px;
     }
-    #install-btn[hidden] {
+    #install-toast .t-act:hover {
+      border-bottom-color: #ffffff;
+    }
+    #install-toast .t-x {
+      font-size: 14px;
+      line-height: 1;
+    }
+    #install-toast .t-x:hover {
+      color: #ffffff;
+    }
+    #install-toast .t-act[hidden] {
       display: none;
     }
 
@@ -442,9 +478,6 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
     <div class="gallery-column" data-col="3"></div>
     <div class="gallery-column" data-col="4"></div>
   </div>
-
-  <!-- Install affordance. Hidden by default; shown only while installable. -->
-  <button id="install-btn" type="button" hidden>install</button>
 
   <script>
     let mode = 'random';
@@ -812,13 +845,13 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
   </script>
 
   <script>
-  // ---- PWA: service worker + install affordance ----
+  // ---- PWA: service worker + install toast ----
   (function () {
-    var btn = document.getElementById('install-btn');
     var deferredPrompt = null;
+    var toast = null;
 
-    // Already installed? A window opened in --app / standalone is an installed app,
-    // NOT the browser. Never offer to install from inside the installed app.
+    // Already installed? A window opened in --app / standalone is the installed app,
+    // not the browser. Never ask to install from inside the installed app.
     var standalone = window.matchMedia('(display-mode: standalone)').matches
       || window.matchMedia('(display-mode: fullscreen)').matches
       || window.matchMedia('(display-mode: minimal-ui)').matches
@@ -833,54 +866,99 @@ $pwaTitle = $config['pwaTitle'] ?? $siteName;
       || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
 
-    function show(text) {
-      if (!btn || standalone) return;
-      if (text) btn.textContent = text;
-      btn.hidden = false;
+    var SEEN_KEY = 'mood.installToast';
+
+    // A toast is transient by design: it appears, it can be dismissed, and it never
+    // occupies the gallery. Created in JS so it adds nothing to the page until it
+    // has something to say. Dismissed state is remembered so it does not nag.
+    function buildToast(text, actionLabel) {
+      if (toast) return toast;
+
+      toast = document.createElement('div');
+      toast.id = 'install-toast';
+      toast.setAttribute('role', 'status');
+      toast.innerHTML =
+        '<span class="t-msg"></span>' +
+        '<button class="t-act" type="button"></button>' +
+        '<button class="t-x" type="button" aria-label="dismiss">\u00d7</button>';
+
+      toast.querySelector('.t-msg').textContent = text;
+      var act = toast.querySelector('.t-act');
+      act.textContent = actionLabel;
+      toast.querySelector('.t-x').addEventListener('click', function (e) {
+        e.stopPropagation();
+        dismiss(true);
+      });
+
+      document.body.appendChild(toast);
+      // next frame so the transition runs
+      requestAnimationFrame(function () { toast.classList.add('show'); });
+      return toast;
     }
 
-    // Chromium: fires when the app is genuinely installable.
-    window.addEventListener('beforeinstallprompt', function (e) {
-      e.preventDefault();
-      deferredPrompt = e;
-      show('install');
-    });
-
-    // Show it immediately instead of waiting for the event. On desktop Chromium the
-    // event can arrive late (or not at all if already dismissed once); the button
-    // then has no prompt to call, so clicking falls back to instructions.
-    if (!standalone) {
-      if (isIOS && isSafari) {
-        show('add to home screen');
-      } else {
-        show('install');
+    function dismiss(remember) {
+      if (!toast) return;
+      toast.classList.remove('show');
+      if (remember) {
+        try { localStorage.setItem(SEEN_KEY, '1'); } catch (e) {}
       }
+      var t = toast;
+      toast = null;
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
     }
 
-    if (btn) {
-      btn.addEventListener('click', function () {
+    function alreadyDismissed() {
+      try { return localStorage.getItem(SEEN_KEY) === '1'; } catch (e) { return false; }
+    }
+
+    function offerInstall() {
+      if (standalone || alreadyDismissed()) return;
+
+      var iosHint = isIOS && isSafari;
+      var t = buildToast(
+        iosHint ? 'add mood to your home screen' : 'install mood',
+        iosHint ? 'how' : 'install'
+      );
+
+      t.querySelector('.t-act').addEventListener('click', function () {
         if (deferredPrompt) {
           deferredPrompt.prompt();
           deferredPrompt.userChoice.then(function () {
             deferredPrompt = null;
-            btn.hidden = true;
+            dismiss(true);
           });
           return;
         }
-        // No prompt available (iOS, Firefox, or already-dismissed).
-        if (isIOS) {
-          btn.textContent = 'share \u2192 add to home screen';
-        } else {
-          btn.textContent = 'menu \u2192 install mood';
-        }
-        setTimeout(function () { btn.textContent = 'install'; }, 4000);
+        // No native prompt available (iOS, Firefox, or already dismissed once).
+        // The toast turns into the instruction instead of doing nothing.
+        t.querySelector('.t-msg').textContent = iosHint
+          ? 'share \u2192 add to home screen'
+          : 'browser menu \u2192 install app';
+        t.querySelector('.t-act').hidden = true;
+        setTimeout(function () { dismiss(false); }, 6000);
       });
     }
 
+    // Chromium fires this when the app is genuinely installable. It may arrive late,
+    // or never (if dismissed once) — the toast does not wait for it, but it does not
+    // interrupt the first impression either: the prompt is stored and the offer still
+    // waits for the delay below.
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
     window.addEventListener('appinstalled', function () {
       deferredPrompt = null;
-      if (btn) btn.hidden = true;
+      dismiss(true);
     });
+
+    // Do not interrupt the first impression: the gallery gets a moment to load and
+    // the visitor gets a moment to scroll before anything is asked of them.
+    var DELAY = 9000;
+    if (!standalone && !alreadyDismissed()) {
+      setTimeout(offerInstall, DELAY);
+    }
 
     // ---- True fullscreen ----
     // Chromium does not grant display-mode:fullscreen to a normal app window; it
